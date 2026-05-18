@@ -1,29 +1,29 @@
 {
-  "name": "distributed-oms",
-  "version": "0.0.0",
-  "private": true,
-  "devDependencies": {
-    "@commitlint/cli": "^21.0.1",
-    "@commitlint/config-conventional": "^21.0.1",
-    "@nx/eslint": "^22.7.2",
-    "@nx/eslint-plugin": "^22.7.2",
-    "@typescript-eslint/eslint-plugin": "^8.59.3",
-    "@typescript-eslint/parser": "^8.59.3",
-    "eslint": "^10.3.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^17.0.4",
-    "nx": "22.7.2",
-    "prettier": "^3.8.3"
-  },
-  "scripts": {
-    "prepare": "husky"
-  },
-  "lint-staged": {
-    "*.{ts,js,json}": [
-      "prettier --write"
-    ],
-    "*.{ts,js}": [
-      "eslint --fix"
-    ]
-  }
+    "name": "distributed-oms",
+    "version": "0.0.0",
+    "private": true,
+    "devDependencies": {
+        "@commitlint/cli": "^21.0.1",
+        "@commitlint/config-conventional": "^21.0.1",
+        "@nx/eslint": "^22.7.2",
+        "@nx/eslint-plugin": "^22.7.2",
+        "@typescript-eslint/eslint-plugin": "^8.59.3",
+        "@typescript-eslint/parser": "^8.59.3",
+        "eslint": "^10.3.0",
+        "husky": "^9.1.7",
+        "lint-staged": "^17.0.4",
+        "nx": "22.7.2",
+        "prettier": "^3.8.3"
+    },
+    "scripts": {
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.{ts,js,json}": [
+            "prettier --write"
+        ],
+        "*.{ts,js}": [
+            "eslint --fix"
+        ]
+    }
 }
