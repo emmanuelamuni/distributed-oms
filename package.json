@@ -34,7 +34,9 @@
         "typescript": "~5.9.2"
     },
     "scripts": {
-        "prepare": "husky"
+        "prepare": "husky",
+        "infra:up": "docker compose -f ./infra/compose.yaml up -d",
+        "infra:down": "docker compose -f ./infra/compose.yaml down"
     },
     "lint-staged": {
         "*.{ts,js,json}": [
