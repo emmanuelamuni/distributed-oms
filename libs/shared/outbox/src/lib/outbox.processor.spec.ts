@@ -101,6 +101,7 @@ describe('OutboxProcessor', () => {
             expect(repository.markPublished).toHaveBeenCalledWith('rec-2');
         });
     });
+
     describe('when a publish fails', () => {
         it('should mark the record as failed', async () => {
             const record = makeRecord({ id: 'failing-record' });
