@@ -114,6 +114,7 @@ describe('OutboxProcessor', () => {
             expect(repository.markFailed).toHaveBeenCalledWith('failing-record');
             expect(repository.markPublished).not.toHaveBeenCalled();
         });
+
         it('should continue processing remaining records after a failure', async () => {
             const records = [
                 makeRecord({ id: 'failing-record' }),
