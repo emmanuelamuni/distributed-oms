@@ -4,6 +4,10 @@
 /build
 /tmp
 
+# Nx and jest
+/.nx
+/coverage
+
 # Logs
 logs
 *.log
@@ -22,8 +26,3 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
-
-
-
-.nx/cache
-.nx/workspace-data
