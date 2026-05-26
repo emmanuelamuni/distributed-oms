@@ -6,3 +6,4 @@ export * from './lib/query.base';
 export * from './lib/repository.port';
 export * from './lib/use-case.port';
 export * from './lib/value-object.base';
+export * from './lib/unique-id.base';
