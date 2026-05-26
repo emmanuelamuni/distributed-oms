@@ -1,4 +1,5 @@
-export abstract class ValueObjectBase<T extends Record<string, unknown>> {
+// export abstract class ValueObjectBase<T extends Record<string, unknown>> {
+export abstract class ValueObjectBase<T extends object> {
     protected props: T;
 
     protected constructor(props: T) {
