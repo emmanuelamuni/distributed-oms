@@ -4,11 +4,15 @@
         "build": {
             "cache": true
         },
-        "test": {
-            "cache": true
-        },
         "lint": {
             "cache": true
+        },
+        "test": {
+            "cache": true,
+            "options": {
+                "passWithNoTests": true,
+                "coverage": true
+            }
         },
         "@nx/js:tsc": {
             "cache": true,

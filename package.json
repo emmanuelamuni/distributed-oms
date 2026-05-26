@@ -35,6 +35,8 @@
     },
     "scripts": {
         "prepare": "husky",
+        "lint": "nx run-many -t lint",
+        "test": "nx run-many -t test",
         "infra:up": "docker compose -f ./infra/compose.yaml up -d",
         "infra:down": "docker compose -f ./infra/compose.yaml down"
     },
