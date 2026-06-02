@@ -1,7 +1,9 @@
 export abstract class EntityBase<T> {
+    protected readonly props: T;
     protected readonly _id: string;
 
-    protected constructor(id: string) {
+    protected constructor(props: T, id: string) {
+        this.props = props;
         this._id = id;
     }
 
