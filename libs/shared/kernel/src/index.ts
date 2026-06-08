@@ -7,3 +7,4 @@ export * from './lib/repository.port';
 export * from './lib/use-case.port';
 export * from './lib/value-object.base';
 export * from './lib/unique-id.base';
+export * from './lib/sku.vo';
