@@ -27,16 +27,11 @@ describe('OrderLine', () => {
             expect(line.sku).toBe('WIDGET-1234');
         });
 
-        it('should throw if quantity is zero', () => {
-            expect(() => OrderLine.create({ ...validProps, quantity: 0 })).toThrow();
-        });
-
-        it('should throw if quantity is negative', () => {
-            expect(() => OrderLine.create({ ...validProps, quantity: -1 })).toThrow();
-        });
-
-        it('should throw if quantity is a float', () => {
-            expect(() => OrderLine.create({ ...validProps, quantity: 1.5 })).toThrow();
+        it('should throw if quantity is invalid', () => {
+            const invalidQuantities = [0, -1, 1.5];
+            invalidQuantities.forEach((iq) =>
+                expect(() => OrderLine.create({ ...validProps, quantity: iq })).toThrow(),
+            );
         });
 
         it('should throw if sku format is invalid', () => {
