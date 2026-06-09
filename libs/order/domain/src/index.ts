@@ -7,5 +7,14 @@ export * from './lib/value-objects/address.vo';
 export * from './lib/entities/order-line.entity';
 
 // Exceptions
+export * from './lib/exceptions/invalid-order-transition.exception';
+export * from './lib/exceptions/order-already-exists.exception';
+export * from './lib/exceptions/order-not-found.exception';
+
+// Events
+export * from './lib/events/inventory-allocated.event';
+export * from './lib/events/order-cancelled.event';
+export * from './lib/events/order-confirmed.event';
+export * from './lib/events/order-created.event';
 
 // Aggreagtes
