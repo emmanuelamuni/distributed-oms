@@ -20,3 +20,7 @@ export * from './lib/events/order-created.event';
 // Aggreagtes
 export * from './lib/aggregates/order.state-machine';
 export * from './lib/aggregates/order.aggregate';
+
+// Ports
+export * from './lib/ports/order-event-publisher.port';
+export * from './lib/ports/order.repository.port';
