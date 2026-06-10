@@ -18,3 +18,5 @@ export * from './lib/events/order-confirmed.event';
 export * from './lib/events/order-created.event';
 
 // Aggreagtes
+export * from './lib/aggregates/order.state-machine';
+export * from './lib/aggregates/order.aggregate';
