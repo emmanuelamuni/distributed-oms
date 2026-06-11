@@ -24,3 +24,6 @@ export * from './lib/aggregates/order.aggregate';
 // Ports
 export * from './lib/ports/order-event-publisher.port';
 export * from './lib/ports/order.repository.port';
+
+// Services
+export * from './lib/services/order-validation.service';
