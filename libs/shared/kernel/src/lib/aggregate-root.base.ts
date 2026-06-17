@@ -1,11 +1,11 @@
 import { DomainEventBase } from './domain-event.base';
 
 export abstract class AggregateRootBase {
-    public readonly id: string;
+    public readonly _id: string;
     private _domainEvents: DomainEventBase[] = [];
 
     constructor(id: string) {
-        this.id = id;
+        this._id = id;
     }
 
     protected apply(domainEvent: DomainEventBase): void {
@@ -16,5 +16,9 @@ export abstract class AggregateRootBase {
         const events = [...this._domainEvents];
         this._domainEvents = [];
         return events;
+    }
+
+    get id(): string {
+        return this._id;
     }
 }
