@@ -2,12 +2,8 @@ export interface OrderCreatedEventPayload {
     orderId: string;
     customerId: string;
     channel: string;
-    lines: Array<{
-        skuId: string;
-        quantity: number;
-        unitPrice: number;
-        currency: string;
-    }>;
+    totalAmount: number;
+    currency: string;
     shippingAddress: {
         street: string;
         city: string;
@@ -15,8 +11,13 @@ export interface OrderCreatedEventPayload {
         postcode: string;
         country: string;
     };
-    totalAmount: number;
-    currency: string;
+    lines: Array<{
+        sku: string;
+        quantity: number;
+        unitPrice: number;
+        lineTotal: number;
+        currency: string;
+    }>;
 }
 
 export interface OrderCreatedEvent {
