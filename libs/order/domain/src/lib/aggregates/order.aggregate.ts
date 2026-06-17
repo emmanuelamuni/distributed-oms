@@ -76,8 +76,8 @@ export class Order extends AggregateRootBase {
             new OrderCreatedEvent(
                 order.id,
                 order.props.customerId,
-                order.props.shippingAddress,
                 order.props.channel,
+                order.props.shippingAddress,
                 order.props.totalAmount,
                 order.props.lines,
             ),
