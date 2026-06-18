@@ -84,15 +84,19 @@ export class CreateOrderHandler implements ICommandHandler<CreateOrderCommand> {
                 await queryRunner.rollbackTransaction();
             }
 
+            this.logger.error(
+                `Error saving order for customer: ${command.customerId}. CorrelationId: ${command.correlationId}`,
+                error instanceof Error ? error.stack : String(error),
+            );
+
             throw error;
         } finally {
-            if (!queryRunner.isReleased) {
-                await queryRunner.release();
-            }
+            if (!queryRunner.isReleased) await queryRunner.release();
         }
 
-        // Build responce, cache, and return
-        const responce: OrderResponseDto = {
+        // Build response, cache, and return
+        const response: OrderResponseDto = {
+            correlationId: command.correlationId,
             orderId: order.id,
             status: order.status.value,
             customerId: order.customerId,
@@ -113,10 +117,10 @@ export class CreateOrderHandler implements ICommandHandler<CreateOrderCommand> {
 
         await this.store.set(
             command.correlationId,
-            responce,
+            response,
             this.config.get('TTL_SECONDS', 86400),
         );
 
-        return responce;
+        return response;
     }
 }
