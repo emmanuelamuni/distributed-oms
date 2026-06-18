@@ -11,6 +11,7 @@ export class OrderLineResponseDto {
 }
 
 export class OrderResponseDto {
+    @ApiProperty({ type: String }) correlationId!: string;
     @ApiProperty({ type: String }) orderId!: string;
     @ApiProperty({ enum: OrderStatusEnum }) status!: OrderStatusEnum;
     @ApiProperty({ type: String }) customerId!: string;
