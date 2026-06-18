@@ -27,6 +27,9 @@ export class ConfirmOrderHandler implements ICommandHandler<ConfirmOrderCommand>
     ) {}
 
     async execute(command: ConfirmOrderCommand): Promise<OrderResponseDto> {
+        const cached = await this.idempotencyStore.get(command.correlationId);
+        if (cached) return cached as OrderResponseDto;
+
         let order: Order | null;
 
         const queryRunner = this.datasource.createQueryRunner();
@@ -39,7 +42,7 @@ export class ConfirmOrderHandler implements ICommandHandler<ConfirmOrderCommand>
 
             order.confirm();
             const events = order.pullDomainEvents();
-            await this.orderRepository.save(order);
+            await this.orderRepository.save(order, queryRunner);
 
             for (const event of events) {
                 await this.outboxRepository.save(
@@ -56,7 +59,10 @@ export class ConfirmOrderHandler implements ICommandHandler<ConfirmOrderCommand>
         } catch (error) {
             if (queryRunner.isTransactionActive) await queryRunner.rollbackTransaction();
 
-            this.logger.error(``, error instanceof Error ? error.stack : String(error));
+            this.logger.error(
+                `Error occured during order (${command.orderId}) confirmation`,
+                error instanceof Error ? error.stack : String(error),
+            );
 
             throw error;
         } finally {
