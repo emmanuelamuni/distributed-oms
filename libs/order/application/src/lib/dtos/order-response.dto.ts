@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrderStatusEnum } from '@doms/order/domain';
+import { OrderStatusEnum, Order } from '@doms/order/domain';
 import { AddressDto } from './address.dto';
 
 export class OrderLineResponseDto {
@@ -22,4 +22,28 @@ export class OrderResponseDto {
     @ApiProperty({ type: String, format: 'date-time' }) createdAt!: Date;
     @ApiProperty({ type: String, format: 'date-time' }) updatedAt!: Date;
     @ApiProperty({ type: () => [OrderLineResponseDto] }) lines!: OrderLineResponseDto[];
+
+    static fromDomain(order: Order, correlationId: string): OrderResponseDto {
+        const response: OrderResponseDto = {
+            correlationId: correlationId,
+            orderId: order.id,
+            status: order.status.value,
+            customerId: order.customerId,
+            channel: order.channel,
+            totalAmount: order.totalAmount.amount,
+            currency: order.totalAmount.currency,
+            lines: order.lines.map((l) => ({
+                sku: l.sku,
+                quantity: l.quantity,
+                unitPrice: l.unitPrice.amount,
+                lineTotal: l.lineTotal().amount,
+                currency: l.lineTotal().currency,
+            })),
+            shippingAddress: order.shippingAddress,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+        };
+
+        return response;
+    }
 }
