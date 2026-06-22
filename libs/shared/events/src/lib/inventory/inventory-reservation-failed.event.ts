@@ -1,6 +1,6 @@
 export interface InventoryReservationFailedEventPayload {
     orderId: string;
-    reason: string;
+    reason?: string;
     failedAt: string;
     correlationId: string;
 }

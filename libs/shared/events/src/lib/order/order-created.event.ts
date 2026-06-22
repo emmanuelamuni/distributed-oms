@@ -18,6 +18,7 @@ export interface OrderCreatedEventPayload {
         lineTotal: number;
         currency: string;
     }>;
+    correlationId: string;
 }
 
 export interface OrderCreatedEvent {
