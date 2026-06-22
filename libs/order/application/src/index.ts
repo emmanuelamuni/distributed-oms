@@ -16,5 +16,8 @@ export * from './lib/commands/create-order.command';
 export * from './lib/commands/create-order.handler';
 
 // Queries
+export * from './lib/queries/get-order.query';
+export * from './lib/queries/get-order.handler';
 
 // Sagas
+export * from './lib/sagas/create-order.saga';
