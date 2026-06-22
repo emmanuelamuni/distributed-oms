@@ -2,9 +2,9 @@ import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { of } from 'rxjs';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
-import { IdempotencyStorePort } from './idempotency.store.port';
+import { IIdempotencyStorePort } from './idempotency.store.port';
 
-const mockStore = (): jest.Mocked<IdempotencyStorePort> => ({
+const mockStore = (): jest.Mocked<IIdempotencyStorePort> => ({
     get: jest.fn(),
     set: jest.fn(),
     has: jest.fn(),
@@ -28,7 +28,7 @@ const mockCallHandler = (response: unknown) => ({
 
 describe('IdempotencyInterceptor', () => {
     let config: jest.Mocked<ConfigService>;
-    let store: jest.Mocked<IdempotencyStorePort>;
+    let store: jest.Mocked<IIdempotencyStorePort>;
     let interceptor: IdempotencyInterceptor;
 
     beforeEach(() => {
