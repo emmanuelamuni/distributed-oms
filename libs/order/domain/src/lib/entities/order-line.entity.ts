@@ -29,6 +29,10 @@ export class OrderLine extends EntityBase<OrderLineProps> {
         );
     }
 
+    public static reconstitute(props: OrderLineProps, id: string): OrderLine {
+        return new OrderLine(props, id);
+    }
+
     public lineTotal(): Money {
         return this.unitPrice.multiply(this.quantity);
     }
