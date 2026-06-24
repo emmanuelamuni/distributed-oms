@@ -1,23 +1,10 @@
 export interface OrderCreatedEventPayload {
     orderId: string;
-    customerId: string;
-    channel: string;
-    totalAmount: number;
-    currency: string;
-    shippingAddress: {
-        street: string;
-        city: string;
-        state: string;
-        postcode: string;
-        country: string;
-    };
     lines: Array<{
         sku: string;
         quantity: number;
-        unitPrice: number;
-        lineTotal: number;
-        currency: string;
     }>;
+    createdAt: string;
     correlationId: string;
 }
 

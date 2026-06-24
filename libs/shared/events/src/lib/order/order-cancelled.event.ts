@@ -2,6 +2,7 @@ export interface OrderCancelledEventPayload {
     orderId: string;
     reason: string;
     cancelledAt: string;
+    correlationId: string;
 }
 
 export interface OrderCancelledEvent {
