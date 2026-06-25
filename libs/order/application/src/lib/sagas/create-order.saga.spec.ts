@@ -16,28 +16,17 @@ const mockInventoryCommandPublisher: jest.Mocked<IInventoryCommandPublisher> = {
 
 const orderPayload = {
     orderId: 'e3a3eb39-1eeb-4f7f-90f2-f4c4bcb61c6e',
-    customerId: 'b4428981-5678-4986-93ed-685000708ea4',
-    channel: 'web',
-    totalAmount: 2000,
-    currency: 'USD',
-    shippingAddress: {
-        street: '14 Old Town Street',
-        city: 'Ajah',
-        state: 'Lagos',
-        postcode: '100101',
-        country: 'NG',
-    },
-    lines: [
-        {
-            sku: 'WIDGET-1234',
-            quantity: 2,
-            unitPrice: 1000,
-            lineTotal: 2000,
-            currency: 'USD',
-        },
-    ],
     correlationId: '1714e15b-cfad-48b9-adbb-b2973a1f682f',
 };
+export interface OrderCreatedEventPayload {
+    orderId: string;
+    lines: Array<{
+        sku: string;
+        quantity: number;
+    }>;
+    createdAt: string;
+    correlationId: string;
+}
 
 describe('CreateOrderSaga', () => {
     let saga: CreateOrderSaga;
@@ -58,7 +47,12 @@ describe('CreateOrderSaga', () => {
 
     describe('onOrderCreated', () => {
         it('should publish ReserveInventory command with correct payload', async () => {
-            await saga.onOrderCreated(orderPayload);
+            await saga.onOrderCreated({
+                orderId: orderPayload.orderId,
+                lines: [{ sku: 'WIDGET-1234', quantity: 2 }],
+                createdAt: '2026-05-04',
+                correlationId: orderPayload.correlationId,
+            });
 
             expect(mockInventoryCommandPublisher.publish).toHaveBeenCalledWith({
                 orderId: orderPayload.orderId,
@@ -75,8 +69,8 @@ describe('CreateOrderSaga', () => {
                 orderId: orderPayload.orderId,
                 lines: [
                     {
-                        sku: orderPayload.lines[0].sku,
-                        quantity: orderPayload.lines[0].quantity,
+                        sku: 'WIDGET-1234',
+                        quantity: 2,
                         nodeId: 'bc8f88f6-9747-4c4f-904c-579a9fe4a67f',
                     },
                 ],

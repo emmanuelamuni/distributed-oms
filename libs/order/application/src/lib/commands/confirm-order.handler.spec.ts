@@ -7,6 +7,7 @@ import { ConfirmOrderCommand } from './confirm-order.command';
 import { ConfirmOrderHandler } from './confirm-order.handler';
 import { OrderStatusEnum, Order, OrderNotFoundException } from '@doms/order/domain';
 import { Test, TestingModule } from '@nestjs/testing';
+import { OrderConfirmedEvent } from '@doms/order/domain';
 
 // Mocks
 const mockQueryRunner = {
@@ -73,12 +74,7 @@ const mockOrder = {
     confirm: jest.fn(),
     pullDomainEvents: jest
         .fn()
-        .mockReturnValue([
-            {
-                aggregateId: 'e3a3eb39-1eeb-4f7f-90f2-f4c4bcb61c6e',
-                eventType: 'OrderConfirmedEvent',
-            },
-        ]),
+        .mockReturnValue([new OrderConfirmedEvent('e3a3eb39-1eeb-4f7f-90f2-f4c4bcb61c6e')]),
 };
 
 const validCommand = new ConfirmOrderCommand(mockOrder.id, '577ef032-2b25-4182-af81-9882955d0c4e');
@@ -139,7 +135,7 @@ describe('ConfirmOrderHandler', () => {
             expect(mockQueryRunner.rollbackTransaction).not.toHaveBeenCalled();
             expect(mockOutboxRepository.save).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    eventType: 'OrderConfirmedEvent',
+                    eventType: 'order.confirmed',
                     status: OutboxStatus.PENDING,
                 }),
                 mockQueryRunner,

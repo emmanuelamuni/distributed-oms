@@ -7,6 +7,7 @@ import { CancelOrderCommand } from './cancel-order.command';
 import { CancelOrderHandler } from './cancel-order.handler';
 import { OrderStatusEnum, Order, OrderNotFoundException } from '@doms/order/domain';
 import { Test, TestingModule } from '@nestjs/testing';
+import { OrderCancelledEvent } from '@doms/order/domain';
 
 // Mocks
 const mockQueryRunner = {
@@ -74,10 +75,10 @@ const mockOrder = {
     pullDomainEvents: jest
         .fn()
         .mockReturnValue([
-            {
-                aggregateId: 'e3a3eb39-1eeb-4f7f-90f2-f4c4bcb61c6e',
-                eventType: 'OrderCancelledEvent',
-            },
+            new OrderCancelledEvent(
+                'e3a3eb39-1eeb-4f7f-90f2-f4c4bcb61c6e',
+                'INVENTORY_UNAVAILABLE',
+            ),
         ]),
 };
 
@@ -143,7 +144,7 @@ describe('CancelOrderHandler', () => {
             expect(mockQueryRunner.rollbackTransaction).not.toHaveBeenCalled();
             expect(mockOutboxRepository.save).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    eventType: 'OrderCancelledEvent',
+                    eventType: 'order.cancelled',
                     status: OutboxStatus.PENDING,
                 }),
                 mockQueryRunner,
