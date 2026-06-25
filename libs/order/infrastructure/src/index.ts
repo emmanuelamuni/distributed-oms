@@ -1,6 +1,8 @@
 export * from './lib/order-infrastructure.module';
 
 // Messaging
+export * from './lib/messaging/publishers/inventory-command.kafka-publisher';
+export * from './lib/messaging/adapters/outbox.kafka-publisher.adapter';
 
 // Outbox
 export * from './lib/outbox/entities/order-outbox.typeorm-entity';
