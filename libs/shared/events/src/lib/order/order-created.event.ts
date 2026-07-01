@@ -1,5 +1,6 @@
 export interface OrderCreatedEventPayload {
     orderId: string;
+    correlationId: string;
     lines: Array<{ sku: string; quantity: number }>;
 }
 
@@ -8,6 +9,5 @@ export interface OrderCreatedEvent {
     eventType: 'order.created';
     eventVersion: number;
     occurredAt: string;
-    correlationId: string;
     payload: OrderCreatedEventPayload;
 }

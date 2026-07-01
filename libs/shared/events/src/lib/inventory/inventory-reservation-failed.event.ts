@@ -1,5 +1,6 @@
 export interface InventoryReservationFailedEventPayload {
     orderId: string;
+    correlationId: string;
     reason?: string;
 }
 
@@ -8,6 +9,5 @@ export interface InventoryReservationFailedEvent {
     eventType: 'inventory.reservation.failed';
     eventVersion: number;
     occurredAt: string;
-    correlationId: string;
     payload: InventoryReservationFailedEventPayload;
 }

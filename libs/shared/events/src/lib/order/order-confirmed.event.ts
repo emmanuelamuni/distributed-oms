@@ -1,5 +1,6 @@
 export interface OrderConfirmedEventPayload {
     orderId: string;
+    correlationId: string;
 }
 
 export interface OrderConfirmedEvent {
@@ -7,6 +8,5 @@ export interface OrderConfirmedEvent {
     eventType: 'order.confirmed';
     eventVersion: number;
     occurredAt: string;
-    correlationId: string;
     payload: OrderConfirmedEventPayload;
 }

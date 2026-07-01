@@ -1,5 +1,6 @@
 export interface InventoryReservedEventPayload {
     orderId: string;
+    correlationId: string;
     lines: Array<{
         sku: string;
         quantity: number;
@@ -12,6 +13,5 @@ export interface InventoryReservedEvent {
     eventType: 'inventory.reservation.succeeded';
     eventVersion: number;
     occurredAt: string;
-    correlationId: string;
     payload: InventoryReservedEventPayload;
 }
