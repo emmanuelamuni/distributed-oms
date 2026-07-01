@@ -1,13 +1,16 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, VersionColumn } from 'typeorm';
 import { OutboxStatus, OutboxRecord } from '@doms/shared/outbox';
 
 @Entity('order_outbox')
 export class OrderOutboxTypeOrmEntity implements OutboxRecord {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryColumn('uuid')
     id!: string;
 
     @Column({ name: 'event_type', type: 'varchar' })
     eventType!: string;
+
+    @VersionColumn({ type: 'int' })
+    eventVersion!: number;
 
     @Column({ type: 'jsonb' })
     payload!: Record<string, unknown>;
