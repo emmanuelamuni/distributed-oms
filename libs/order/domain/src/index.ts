@@ -12,10 +12,10 @@ export * from './lib/exceptions/order-already-exists.exception';
 export * from './lib/exceptions/order-not-found.exception';
 
 // Events
-export * from './lib/events/inventory-allocated.event';
-export * from './lib/events/order-cancelled.event';
-export * from './lib/events/order-confirmed.event';
-export * from './lib/events/order-created.event';
+export * from './lib/events/inventory-allocated.domain-event';
+export * from './lib/events/order-cancelled.domain-event';
+export * from './lib/events/order-confirmed.domain-event';
+export * from './lib/events/order-created.domain-event';
 
 // Aggreagtes
 export * from './lib/aggregates/order.state-machine';
@@ -23,7 +23,6 @@ export * from './lib/aggregates/order.aggregate';
 
 // Ports
 export * from './lib/ports/order.repository.port';
-export * from './lib/ports/inventory-command-publisher.port';
 
 // Services
 export * from './lib/services/order-validation.service';
