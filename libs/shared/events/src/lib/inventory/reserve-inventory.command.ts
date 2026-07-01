@@ -7,6 +7,7 @@ export interface ReserveInventoryCommandPayload {
 export interface ReserveInventoryCommand {
     eventId: string;
     eventType: 'inventory.commands.reserve';
+    eventVersion: number;
     occurredAt: string;
     payload: ReserveInventoryCommandPayload;
 }
