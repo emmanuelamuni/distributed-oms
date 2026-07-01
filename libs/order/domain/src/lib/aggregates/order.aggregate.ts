@@ -3,12 +3,12 @@ import { OrderLine } from '../entities/order-line.entity';
 import { OrderStatus, OrderStatusEnum } from '../value-objects/order-status.vo';
 import { Address } from '../value-objects/address.vo';
 import { Money } from '../value-objects/money.vo';
-import { OrderCreatedEvent } from '../events/order-created.event';
 import { OrderStateMachine } from './order.state-machine';
 import { InvalidOrderTransitionException } from '../exceptions/invalid-order-transition.exception';
-import { OrderConfirmedEvent } from '../events/order-confirmed.event';
-import { OrderCancelledEvent } from '../events/order-cancelled.event';
-import { InventoryAllocatedEvent } from '../events/inventory-allocated.event';
+import { OrderCreatedDomainEvent } from '../events/order-created.domain-event';
+import { OrderConfirmedDomainEvent } from '../events/order-confirmed.domain-event';
+import { OrderCancelledDomainEvent } from '../events/order-cancelled.domain-event';
+import { InventoryAllocatedDomainEvent } from '../events/inventory-allocated.domain-event';
 
 export interface OrderProps {
     customerId: string;
@@ -72,17 +72,7 @@ export class Order extends AggregateRootBase {
             UniqueId.create().value,
         );
 
-        order.apply(
-            new OrderCreatedEvent(
-                order.id,
-                order.props.customerId,
-                order.props.channel,
-                order.props.shippingAddress,
-                order.props.totalAmount,
-                order.props.lines,
-            ),
-        );
-
+        order.apply(new OrderCreatedDomainEvent(order.id, order.props.lines));
         return order;
     }
 
@@ -99,7 +89,7 @@ export class Order extends AggregateRootBase {
 
         this.props.status = OrderStatus.create(toStatus);
         this.props.updatedAt = new Date();
-        this.apply(new OrderConfirmedEvent(this.id));
+        this.apply(new OrderConfirmedDomainEvent(this.id));
     }
 
     cancel(reason: string): void {
@@ -111,7 +101,7 @@ export class Order extends AggregateRootBase {
 
         this.props.status = OrderStatus.create(toStatus);
         this.props.updatedAt = new Date();
-        this.apply(new OrderCancelledEvent(this.id, reason));
+        this.apply(new OrderCancelledDomainEvent(this.id, reason));
     }
 
     allocate(reservationId: string): void {
@@ -123,7 +113,7 @@ export class Order extends AggregateRootBase {
 
         this.props.status = OrderStatus.create(OrderStatusEnum.ALLOCATED);
         this.props.updatedAt = new Date();
-        this.apply(new InventoryAllocatedEvent(this.id, reservationId));
+        this.apply(new InventoryAllocatedDomainEvent(this.id, reservationId));
     }
 
     get customerId(): string {
