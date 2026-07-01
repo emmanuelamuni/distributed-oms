@@ -8,7 +8,9 @@ import { Order, Address, OrderLine, Money } from '@doms/order/domain';
 import { ORDER_REPOSITORY, IOrderRepository } from '@doms/order/domain';
 import { DataSource } from 'typeorm';
 import { OUTBOX_REPOSITORY, IOutboxRepositoryPort, OutboxStatus } from '@doms/shared/outbox';
-import { DomainEventsConverter } from '../converters/domain-event.convert';
+import { ReserveInventoryCommand } from '@doms/shared/events';
+import { OrderCreatedDomainEvent } from '@doms/order/domain';
+import { randomUUID } from 'node:crypto';
 
 /**
  * Handler class to create order, save, and write to outbox
@@ -69,18 +71,42 @@ export class CreateOrderHandler implements ICommandHandler<CreateOrderCommand> {
         try {
             await this.orderRepository.save(order, queryRunner);
 
-            for (const event of domainEvents) {
+            for (const _event of domainEvents) {
                 // Convert domain events appropriately
-                const sharedEvent = DomainEventsConverter.toOutboxRecord(
-                    event,
-                    command.correlationId,
-                );
+                const event = _event as OrderCreatedDomainEvent;
 
+                const integrationEvent: ReserveInventoryCommand = {
+                    eventId: event.eventId,
+                    eventType: 'inventory.commands.reserve',
+                    eventVersion: event.eventVersion,
+                    occurredAt: event.occurredAt.toISOString(),
+                    payload: {
+                        orderId: event.aggregateId,
+                        correlationId: command.correlationId,
+                        lines: event.lines.map((l) => ({ sku: l.sku, quantity: l.quantity })),
+                    },
+                };
+
+                // Save the outbox for inventory reservation command
                 await this.outboxRepository.save(
                     {
-                        eventType: sharedEvent.eventType,
+                        id: integrationEvent.eventId,
+                        eventType: integrationEvent.eventType,
+                        eventVersion: integrationEvent.eventVersion,
+                        payload: integrationEvent.payload as unknown as Record<string, unknown>,
                         status: OutboxStatus.PENDING,
-                        payload: sharedEvent.payload,
+                    },
+                    queryRunner,
+                );
+
+                // Save the outbox for order created (to be consumed by some services and integrations downstream)
+                await this.outboxRepository.save(
+                    {
+                        id: randomUUID(),
+                        eventType: 'order.created',
+                        eventVersion: integrationEvent.eventVersion,
+                        payload: integrationEvent.payload as unknown as Record<string, unknown>,
+                        status: OutboxStatus.PENDING,
                     },
                     queryRunner,
                 );

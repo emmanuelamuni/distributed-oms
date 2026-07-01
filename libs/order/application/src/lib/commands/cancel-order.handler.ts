@@ -8,7 +8,8 @@ import { DataSource } from 'typeorm';
 import { OrderNotFoundException, Order } from '@doms/order/domain';
 import { OUTBOX_REPOSITORY, IOutboxRepositoryPort, OutboxStatus } from '@doms/shared/outbox';
 import { ConfigService } from '@nestjs/config';
-import { DomainEventsConverter } from '../converters/domain-event.convert';
+import { OrderCancelledEvent } from '@doms/shared/events';
+import { OrderCancelledDomainEvent } from '@doms/order/domain';
 
 @CommandHandler(CancelOrderCommand)
 export class CancelOrderHandler implements ICommandHandler<CancelOrderCommand> {
@@ -43,21 +44,32 @@ export class CancelOrderHandler implements ICommandHandler<CancelOrderCommand> {
             if (!order) throw new OrderNotFoundException(command.orderId);
 
             order.cancel(command.reason);
-            const events = order.pullDomainEvents();
+            const domainEvents = order.pullDomainEvents();
             await this.orderRepository.save(order, queryRunner);
 
-            for (const event of events) {
+            for (const _event of domainEvents) {
                 // Convert domain events appropriately
-                const sharedEvent = DomainEventsConverter.toOutboxRecord(
-                    event,
-                    command.correlationId,
-                );
+                const event = _event as OrderCancelledDomainEvent;
+
+                const integrationEvent: OrderCancelledEvent = {
+                    eventId: event.eventId,
+                    eventType: 'order.cancelled',
+                    eventVersion: event.eventVersion,
+                    occurredAt: event.occurredAt.toISOString(),
+                    payload: {
+                        orderId: event.aggregateId,
+                        correlationId: command.correlationId,
+                        reason: event.reason,
+                    },
+                };
 
                 await this.outboxRepository.save(
                     {
-                        eventType: sharedEvent.eventType,
+                        id: integrationEvent.eventId,
+                        eventType: integrationEvent.eventType,
+                        eventVersion: integrationEvent.eventVersion,
+                        payload: integrationEvent.payload as unknown as Record<string, unknown>,
                         status: OutboxStatus.PENDING,
-                        payload: sharedEvent.payload,
                     },
                     queryRunner,
                 );
