@@ -21,7 +21,7 @@ export class OrderOutboxTypeOrmRepository implements IOutboxRepositoryPort {
     }
 
     async save(
-        record: Omit<OutboxRecord, 'id' | 'createdAt' | 'publishedAt' | 'retryCount'>,
+        record: Omit<OutboxRecord, 'createdAt' | 'publishedAt' | 'retryCount'>,
         queryRunner?: unknown,
     ): Promise<void> {
         await this.getRepository(queryRunner).save(record);
