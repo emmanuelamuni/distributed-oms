@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn, CreateDateColumn, VersionColumn } from 'typeorm';
 import { OutboxStatus, OutboxRecord } from '@doms/shared/outbox';
 
-@Entity('order_outbox')
+@Entity('order_outboxes')
 export class OrderOutboxTypeOrmEntity implements OutboxRecord {
     @PrimaryColumn('uuid')
     id!: string;
