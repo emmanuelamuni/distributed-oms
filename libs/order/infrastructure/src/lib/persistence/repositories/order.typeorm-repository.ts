@@ -29,7 +29,10 @@ export class OrderTypeOrmRepository implements IOrderRepository {
 
     async findById(id: string, queryRunner?: unknown): Promise<Order | null> {
         const repo = this.getRepository(queryRunner);
-        const entity = await repo.findOne({ where: { id } });
+        const entity = await repo.findOne({
+            where: { id },
+            relations: { lines: true },
+        });
         return entity ? OrderMapper.toDomain(entity) : null;
     }
 
