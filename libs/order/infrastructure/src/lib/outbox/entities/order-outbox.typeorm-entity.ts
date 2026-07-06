@@ -9,7 +9,7 @@ export class OrderOutboxTypeOrmEntity implements OutboxRecord {
     @Column({ name: 'event_type', type: 'varchar' })
     eventType!: string;
 
-    @VersionColumn({ type: 'int' })
+    @VersionColumn({ name: 'event_version', type: 'int' })
     eventVersion!: number;
 
     @Column({ type: 'jsonb' })
