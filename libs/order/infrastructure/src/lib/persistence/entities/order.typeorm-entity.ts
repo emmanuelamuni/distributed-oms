@@ -57,7 +57,7 @@ export class OrderTypeOrmEntity {
     @OneToMany(
         () => require('./order-line.typeorm-entity').OrderLineTypeOrmEntity,
         (line: any) => line.orderId,
-        { cascade: true },
+        { cascade: true, orphanedRowAction: 'delete' },
     )
     lines!: any[];
 }
