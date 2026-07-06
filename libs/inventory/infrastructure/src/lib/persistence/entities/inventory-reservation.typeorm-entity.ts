@@ -1,8 +1,11 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('inventory_reservations')
 export class InventoryReservationTypeOrmEntity {
-    @PrimaryColumn('uuid')
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
+
+    @Column({ name: 'reservation_id', type: 'uuid' })
     reservationId!: string;
 
     @Column({ type: 'varchar' })
@@ -11,7 +14,7 @@ export class InventoryReservationTypeOrmEntity {
     @Column({ type: 'int' })
     quantity!: number;
 
-    @Column({ type: 'varchar' })
+    @Column({ name: 'order_id', type: 'uuid' })
     orderId!: string;
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
