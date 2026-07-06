@@ -1,0 +1,29 @@
+import { Entity, Column, PrimaryColumn, CreateDateColumn, VersionColumn } from 'typeorm';
+import { OutboxStatus, OutboxRecord } from '@doms/shared/outbox';
+
+@Entity('inventory_outboxes')
+export class InventoryOutboxTypeOrmEntity implements OutboxRecord {
+    @PrimaryColumn('uuid')
+    id!: string;
+
+    @Column({ name: 'event_type', type: 'varchar' })
+    eventType!: string;
+
+    @VersionColumn({ name: 'event_version', type: 'int' })
+    eventVersion!: number;
+
+    @Column({ type: 'jsonb' })
+    payload!: Record<string, unknown>;
+
+    @Column({ type: 'enum', enum: OutboxStatus, default: OutboxStatus.PENDING })
+    status!: OutboxStatus;
+
+    @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+    createdAt!: Date;
+
+    @Column({ name: 'published_at', type: 'timestamp', nullable: true })
+    publishedAt!: Date | null;
+
+    @Column({ name: 'retry_count', type: 'int', default: 0 })
+    retryCount!: number;
+}
