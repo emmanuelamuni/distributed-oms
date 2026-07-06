@@ -8,6 +8,7 @@ import {
 } from '@doms/inventory/domain';
 import { ReleaseReservationCommand } from './release-reservation.command';
 
+/* Triggered by the cancellation of order that's been reserved */
 @CommandHandler(ReleaseReservationCommand)
 export class ReleaseReservationHandler implements ICommandHandler<ReleaseReservationCommand> {
     private readonly logger = new Logger(ReleaseReservationHandler.name);
@@ -41,8 +42,7 @@ export class ReleaseReservationHandler implements ICommandHandler<ReleaseReserva
         } catch (error) {
             if (queryRunner.isTransactionActive) await queryRunner.rollbackTransaction();
             this.logger.error(
-                `Unable to release reservation. CorrelationId: ${correlationId}`,
-                error instanceof Error ? error.stack : String(error),
+                `Unable to release reservation. CorrelationId: ${correlationId}. Error: ${error}`,
             );
         } finally {
             if (!queryRunner.isReleased) await queryRunner.release();
