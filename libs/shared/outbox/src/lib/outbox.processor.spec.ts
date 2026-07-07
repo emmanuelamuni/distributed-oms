@@ -7,6 +7,7 @@ import { OutboxProcessor } from './outbox.processor';
 const makeRecord = (overrides: Partial<OutboxRecord> = {}): OutboxRecord => ({
     id: 'record-001',
     eventType: 'order.created',
+    eventVersion: 1,
     payload: { orderId: 'order-001' },
     status: OutboxStatus.PENDING,
     createdAt: new Date(),
