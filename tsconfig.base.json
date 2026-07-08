@@ -24,7 +24,9 @@
             "@doms/inventory/domain": ["./libs/inventory/domain/src/index.ts"],
             "@doms/inventory/application": ["./libs/inventory/application/src/index.ts"],
             "@doms/inventory/infrastructure": ["./libs/inventory/infrastructure/src/index.ts"],
-            "@doms/shared/utils": ["./libs/shared/utils/src/index.ts"]
+            "@doms/shared/utils": ["./libs/shared/utils/src/index.ts"],
+            "@doms/shared/redis": ["./libs/shared/redis/src/index.ts"],
+            "@doms/shared/kafka": ["./libs/shared/kafka/src/index.ts"]
         }
     },
     "exclude": ["node_modules", "tmp"]
