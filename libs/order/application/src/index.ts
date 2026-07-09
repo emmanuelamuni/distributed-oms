@@ -1,5 +1,3 @@
-export * from './lib/order-application.module';
-
 // Types
 export * from './lib/types/address.type';
 export * from './lib/types/create-order.type';
