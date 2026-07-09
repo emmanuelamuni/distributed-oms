@@ -2,15 +2,22 @@ import { z } from 'zod';
 
 export const parseEnv = () => {
     const configSchema = z.object({
+        REDIS_URL: z.coerce.string(),
+        KAFKA_BROKERS: z.coerce.string(),
+
         ORDER_DB_URL: z.coerce.string(),
         INVENTORY_DB_URL: z.coerce.string(),
-        REDIS_URL: z.coerce.string(),
 
         ORDER_CAPTURE_PORT: z.coerce.number().default(3001),
-        ORDER_ORCHESTRATOR_PORT: z.coerce.number().default(3002),
-        INVENTORY_PORT: z.coerce.number().default(3003),
-        NOTIFICATION_PORT: z.coerce.number().default(3004),
+        // ORDER_CAPTURE_CLIENT_ID: z.coerce.string(),
 
+        ORDER_ORCHESTRATOR_PORT: z.coerce.number().default(3002),
+        // ORDER_ORCHESTRATOR_CLIENT_ID: z.coerce.string(),
+
+        INVENTORY_PORT: z.coerce.number().default(3003),
+        // INVENTORY_CLIENT_ID: z.coerce.string(),
+
+        NOTIFICATION_PORT: z.coerce.number().default(3004),
         GLOBAL_PREFIX: z.coerce.string().default('api/v1'),
 
         OUTBOX_POLL_INTERVAL_MS: z.coerce.number().default(1000),
@@ -19,7 +26,7 @@ export const parseEnv = () => {
         INVENTORY_LOCK_TTL_MS: z.coerce.number().default(5000),
         TTL_SECONDS: z.coerce.number().default(86400),
 
-        NODE_ENV: z.coerce.string().optional(),
+        NODE_ENV: z.coerce.string().default('production'),
     });
 
     const parsed = configSchema.safeParse(process.env);

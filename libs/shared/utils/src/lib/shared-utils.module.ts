@@ -6,7 +6,6 @@ import { parseEnv } from './config.schema';
 @Module({
     imports: [
         ConfigModule.forRoot({
-            isGlobal: true,
             load: [
                 () => {
                     return parseEnv();
@@ -14,5 +13,6 @@ import { parseEnv } from './config.schema';
             ],
         }),
     ],
+    exports: [ConfigModule],
 })
 export class SharedUtilsModule {}
