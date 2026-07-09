@@ -17,3 +17,16 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+// apps/order-capture
+// app.module.ts wires:
+
+// - HTTP controller
+// HTTP controller exposes:
+// - POST /orders — applies IdempotencyInterceptor, maps body to CreateOrderDto, dispatches CreateOrderCommand, returns OrderResponseDto
+// - GET /orders/:id — dispatches GetOrderQuery, returns OrderResponseDto
+// main.ts:
+// - Creates NestJS app
+// - Enables validation pipe (class-validator)
+// - Sets global prefix /api/v1
+// - Listens on configurable port (from env)
