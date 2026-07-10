@@ -27,24 +27,25 @@ export class OutboxProcessor {
 
         const pending = await this.repository.findPending(batchSize, queryRunner);
 
-        if (pending.length < 1) await queryRunner.release();
+        if (pending.length < 1) {
+            await queryRunner.commitTransaction();
+            await queryRunner.release();
+            return;
+        }
 
         for (const record of pending) {
             try {
                 await this.publisher.publish(record.eventType, record.payload);
                 await this.repository.markPublished(record.id, queryRunner);
-
-                await queryRunner.commitTransaction();
             } catch (error) {
                 this.logger.error(
-                    `Failed to publish outbox record ${record.id} (${record.eventType}): ${error}`,
+                    `Failed to publish outbox record ${record.id} (${record.eventType}) | CorrelationId (${record.payload['correlationId']}) : ${error}`,
                 );
-
                 await this.repository.markFailed(record.id, queryRunner);
-                await queryRunner.commitTransaction();
-            } finally {
-                await queryRunner.release();
             }
         }
+
+        await queryRunner.commitTransaction();
+        await queryRunner.release();
     }
 }
