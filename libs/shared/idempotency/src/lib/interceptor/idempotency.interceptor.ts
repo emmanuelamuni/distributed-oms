@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { Observable, of, tap } from 'rxjs';
 import { IDEMPOTENCY_STORE, IIdempotencyStorePort } from '../port/idempotency.store.port';
 
-const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
+const IDEMPOTENCY_KEY_HEADER = 'idempotency-key';
 
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
@@ -29,6 +29,8 @@ export class IdempotencyInterceptor implements NestInterceptor {
         const key = request.headers[IDEMPOTENCY_KEY_HEADER];
         if (!key)
             throw new HttpException('Idempotency-Key header is required', HttpStatus.BAD_REQUEST);
+
+        request.correlationId = key;
 
         const cached = await this.store.get(key);
         if (cached) {
