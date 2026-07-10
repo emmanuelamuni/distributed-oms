@@ -1,8 +1,9 @@
 import { ConfigService } from '@nestjs/config';
-import { OutboxStatus, OutboxRecord } from '../entity/outbox.entity';
+import { DataSource, QueryRunner } from 'typeorm';
+import { OutboxProcessor } from '../processor/outbox.processor';
+import { OutboxRecord, OutboxStatus } from '../entity/outbox.entity';
 import { IOutboxRepositoryPort } from '../ports/outbox.repository.port';
 import { IOutboxPublisherPort } from '../ports/outbox.publisher.port';
-import { OutboxProcessor } from '../processor/outbox.processor';
 
 const makeRecord = (overrides: Partial<OutboxRecord> = {}): OutboxRecord => ({
     id: 'record-001',
@@ -32,17 +33,34 @@ const mockConfigService = (batchSize = 100): jest.Mocked<ConfigService> =>
         get: jest.fn().mockReturnValue(batchSize),
     }) as unknown as jest.Mocked<ConfigService>;
 
+const mockQueryRunner = (): jest.Mocked<QueryRunner> =>
+    ({
+        connect: jest.fn().mockResolvedValue(undefined),
+        startTransaction: jest.fn().mockResolvedValue(undefined),
+        commitTransaction: jest.fn().mockResolvedValue(undefined),
+        rollbackTransaction: jest.fn().mockResolvedValue(undefined),
+        release: jest.fn().mockResolvedValue(undefined),
+    }) as unknown as jest.Mocked<QueryRunner>;
+
 describe('OutboxProcessor', () => {
     let config: jest.Mocked<ConfigService>;
     let repository: jest.Mocked<IOutboxRepositoryPort>;
     let publisher: jest.Mocked<IOutboxPublisherPort>;
+    let dataSource: jest.Mocked<DataSource>;
+    let queryRunner: jest.Mocked<QueryRunner>;
     let processor: OutboxProcessor;
 
     beforeEach(() => {
         config = mockConfigService();
         repository = mockRepository();
         publisher = mockPublisher();
-        processor = new OutboxProcessor(config, repository, publisher);
+        queryRunner = mockQueryRunner();
+
+        dataSource = {
+            createQueryRunner: jest.fn().mockReturnValue(queryRunner),
+        } as unknown as jest.Mocked<DataSource>;
+
+        processor = new OutboxProcessor(dataSource, config, repository, publisher);
     });
 
     describe('when there are no pending records', () => {
@@ -60,7 +78,20 @@ describe('OutboxProcessor', () => {
 
             await processor.process();
 
-            expect(repository.findPending).toHaveBeenCalledWith(50);
+            expect(repository.findPending).toHaveBeenCalledWith(50, queryRunner);
+        });
+
+        it('should create a transaction, commit and release it', async () => {
+            repository.findPending.mockResolvedValue([]);
+
+            await processor.process();
+
+            expect(dataSource.createQueryRunner).toHaveBeenCalledTimes(1);
+            expect(queryRunner.connect).toHaveBeenCalledTimes(1);
+            expect(queryRunner.startTransaction).toHaveBeenCalledTimes(1);
+            expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+            expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();
+            expect(queryRunner.release).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -70,6 +101,7 @@ describe('OutboxProcessor', () => {
                 makeRecord({ id: '1', eventType: 'order.created' }),
                 makeRecord({ id: '2', eventType: 'order.confirmed' }),
             ];
+
             repository.findPending.mockResolvedValue(records);
             publisher.publish.mockResolvedValue(undefined);
             repository.markPublished.mockResolvedValue(undefined);
@@ -91,6 +123,7 @@ describe('OutboxProcessor', () => {
 
         it('should mark each record as published after a successful publish', async () => {
             const records = [makeRecord({ id: 'rec-1' }), makeRecord({ id: 'rec-2' })];
+
             repository.findPending.mockResolvedValue(records);
             publisher.publish.mockResolvedValue(undefined);
             repository.markPublished.mockResolvedValue(undefined);
@@ -98,22 +131,36 @@ describe('OutboxProcessor', () => {
             await processor.process();
 
             expect(repository.markPublished).toHaveBeenCalledTimes(2);
-            expect(repository.markPublished).toHaveBeenCalledWith('rec-1');
-            expect(repository.markPublished).toHaveBeenCalledWith('rec-2');
+            expect(repository.markPublished).toHaveBeenNthCalledWith(1, 'rec-1', queryRunner);
+            expect(repository.markPublished).toHaveBeenNthCalledWith(2, 'rec-2', queryRunner);
+        });
+
+        it('should commit and release the transaction after successful processing', async () => {
+            repository.findPending.mockResolvedValue([makeRecord()]);
+            publisher.publish.mockResolvedValue(undefined);
+            repository.markPublished.mockResolvedValue(undefined);
+
+            await processor.process();
+
+            expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+            expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();
+            expect(queryRunner.release).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('when a publish fails', () => {
         it('should mark the record as failed', async () => {
             const record = makeRecord({ id: 'failing-record' });
+
             repository.findPending.mockResolvedValue([record]);
             publisher.publish.mockRejectedValue(new Error('Kafka unavailable'));
             repository.markFailed.mockResolvedValue(undefined);
 
             await processor.process();
 
-            expect(repository.markFailed).toHaveBeenCalledWith('failing-record');
+            expect(repository.markFailed).toHaveBeenCalledWith('failing-record', queryRunner);
             expect(repository.markPublished).not.toHaveBeenCalled();
+            expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
         });
 
         it('should continue processing remaining records after a failure', async () => {
@@ -121,17 +168,40 @@ describe('OutboxProcessor', () => {
                 makeRecord({ id: 'failing-record' }),
                 makeRecord({ id: 'succeeding-record' }),
             ];
+
             repository.findPending.mockResolvedValue(records);
+
             publisher.publish
                 .mockRejectedValueOnce(new Error('Kafka unavailable'))
                 .mockResolvedValueOnce(undefined);
+
             repository.markFailed.mockResolvedValue(undefined);
             repository.markPublished.mockResolvedValue(undefined);
 
             await processor.process();
 
-            expect(repository.markFailed).toHaveBeenCalledWith('failing-record');
-            expect(repository.markPublished).toHaveBeenCalledWith('succeeding-record');
+            expect(repository.markFailed).toHaveBeenCalledWith('failing-record', queryRunner);
+
+            expect(repository.markPublished).toHaveBeenCalledWith('succeeding-record', queryRunner);
+
+            expect(queryRunner.commitTransaction).toHaveBeenCalledTimes(1);
+            expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('when an unexpected error occurs', () => {
+        it('should rollback the transaction and rethrow', async () => {
+            const record = makeRecord();
+
+            repository.findPending.mockResolvedValue([record]);
+            publisher.publish.mockResolvedValue(undefined);
+            repository.markPublished.mockRejectedValue(new Error('Database failure'));
+            repository.markFailed.mockRejectedValue(new Error('Cannot mark failed'));
+
+            await expect(processor.process()).rejects.toThrow('Cannot mark failed');
+
+            expect(queryRunner.rollbackTransaction).toHaveBeenCalledTimes(1);
+            expect(queryRunner.release).toHaveBeenCalledTimes(1);
         });
     });
 });
