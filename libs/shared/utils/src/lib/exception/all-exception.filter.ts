@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
-import { GlobalErrorRegistry } from './registry.util';
+import { GlobalErrorRegistry } from '../registry/registry.util';
 
 // Log and format well constructed response to client whenever error occurs.
 
