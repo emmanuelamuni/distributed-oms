@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { parseEnv } from './config.schema';
+import { parseEnv } from './env-configs/config.schema';
 
 @Global()
 @Module({
