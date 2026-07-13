@@ -24,7 +24,7 @@ export class InventoryNodeTypeOrmEntity {
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
     @OneToMany(
-        () => require('./reservation.typeorm-entity').InventoryReservationTypeOrmEntity,
+        () => require('./inventory-reservation.typeorm-entity').InventoryReservationTypeOrmEntity,
         (reservation: any) => reservation.inventoryNodeId,
         { cascade: true, orphanedRowAction: 'delete' },
     )
