@@ -11,7 +11,6 @@ export class OrderLineResponseDto {
 }
 
 export class OrderResponseDto {
-    @ApiProperty({ type: String }) correlationId!: string;
     @ApiProperty({ type: String }) orderId!: string;
     @ApiProperty({ enum: OrderStatusEnum }) status!: OrderStatusEnum;
     @ApiProperty({ type: String }) customerId!: string;
@@ -23,9 +22,8 @@ export class OrderResponseDto {
     @ApiProperty({ type: String, format: 'date-time' }) updatedAt!: Date;
     @ApiProperty({ type: () => [OrderLineResponseDto] }) lines!: OrderLineResponseDto[];
 
-    static fromDomain(order: Order, correlationId: string): OrderResponseDto {
+    static fromDomain(order: Order): OrderResponseDto {
         const response: OrderResponseDto = {
-            correlationId: correlationId,
             orderId: order.id,
             status: order.status.value,
             customerId: order.customerId,
