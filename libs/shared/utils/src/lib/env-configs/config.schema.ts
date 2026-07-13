@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { config } from 'dotenv';
+
+config();
 
 export const parseEnv = () => {
     const configSchema = z.object({
@@ -26,7 +29,7 @@ export const parseEnv = () => {
         INVENTORY_LOCK_TTL_MS: z.coerce.number().default(5000),
         TTL_SECONDS: z.coerce.number().default(86400),
 
-        NODE_ENV: z.coerce.string().default('production'),
+        NODE_ENV: z.coerce.string(),
     });
 
     const parsed = configSchema.safeParse(process.env);
