@@ -21,6 +21,6 @@ export class GetOrderHandler implements IQueryHandler<GetOrderQuery> {
             throw new OrderNotFoundException(query.orderId);
         }
 
-        return OrderResponseDto.fromDomain(order, query.correlationId);
+        return OrderResponseDto.fromDomain(order);
     }
 }
