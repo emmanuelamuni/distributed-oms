@@ -8,8 +8,8 @@ import { ConfirmOrderCommand } from '../commands/confirm-order.command';
 import { CancelOrderCommand } from '../commands/cancel-order.command';
 
 @Injectable()
-export class CreateOrderSaga {
-    private readonly logger = new Logger(CreateOrderSaga.name);
+export class OrderSaga {
+    private readonly logger = new Logger(OrderSaga.name);
 
     constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {}
 

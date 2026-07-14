@@ -12,10 +12,14 @@ export * from './lib/dtos/order-response.dto';
 // Commands
 export * from './lib/commands/create-order.command';
 export * from './lib/commands/create-order.handler';
+export * from './lib/commands/confirm-order.command';
+export * from './lib/commands/confirm-order.handler';
+export * from './lib/commands/cancel-order.command';
+export * from './lib/commands/cancel-order.handler';
 
 // Queries
 export * from './lib/queries/get-order.query';
 export * from './lib/queries/get-order.handler';
 
 // Sagas
-export * from './lib/sagas/create-order.saga';
+export * from './lib/sagas/order.saga';

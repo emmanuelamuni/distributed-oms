@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandBus } from '@nestjs/cqrs';
 
-import { CreateOrderSaga } from './create-order.saga';
+import { OrderSaga } from './order.saga';
 import { ConfirmOrderCommand } from '../commands/confirm-order.command';
 import { CancelOrderCommand } from '../commands/cancel-order.command';
 
@@ -23,15 +23,15 @@ export interface OrderCreatedEventPayload {
     correlationId: string;
 }
 
-describe('CreateOrderSaga', () => {
-    let saga: CreateOrderSaga;
+describe('OrderSaga', () => {
+    let saga: OrderSaga;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            providers: [CreateOrderSaga, { provide: CommandBus, useValue: mockCommandBus }],
+            providers: [OrderSaga, { provide: CommandBus, useValue: mockCommandBus }],
         }).compile();
 
-        saga = module.get<CreateOrderSaga>(CreateOrderSaga);
+        saga = module.get<OrderSaga>(OrderSaga);
     });
 
     afterEach(() => jest.clearAllMocks());
