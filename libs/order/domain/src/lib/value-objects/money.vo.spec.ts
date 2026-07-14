@@ -4,10 +4,12 @@ describe('Money', () => {
     describe('create', () => {
         const a = Money.create(109, 'GBP');
         const b = Money.create(1009, 'gbp');
+        const c = Money.create(10.09, 'gbp');
 
         it('should create a valid Money instance', () => {
             expect(a.amount).toBe(109);
             expect(a.currency).toBe('GBP');
+            expect(c.amount).toBe(10.09);
         });
 
         it('should uppercase the currency', () => {
@@ -16,10 +18,6 @@ describe('Money', () => {
 
         it('should throw if amount is negative', () => {
             expect(() => Money.create(-1, 'GBP')).toThrow();
-        });
-
-        it('should throw if amount is a float', () => {
-            expect(() => Money.create(10.99, 'GBP')).toThrow();
         });
 
         it('should throw if currency is not 3 characters', () => {
