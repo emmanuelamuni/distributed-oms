@@ -8,8 +8,7 @@ export class CreateOrderCommand extends CommandBase {
         public readonly channel: string,
         public readonly shippingAddress: AddressInput,
         public readonly lines: Array<OrderLineInput>,
-        correlationId?: string,
     ) {
-        super(correlationId);
+        super();
     }
 }

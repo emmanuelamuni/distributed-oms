@@ -2,7 +2,6 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConfirmOrderCommand } from './confirm-order.command';
 import { Inject, Logger } from '@nestjs/common';
 import { ORDER_REPOSITORY, IOrderRepository } from '@doms/order/domain';
-import { OrderResponseDto } from '../dtos/order-response.dto';
 import { IDEMPOTENCY_STORE, IIdempotencyStorePort } from '@doms/shared/idempotency';
 import { DataSource } from 'typeorm';
 import { OrderNotFoundException, Order } from '@doms/order/domain';
@@ -28,10 +27,10 @@ export class ConfirmOrderHandler implements ICommandHandler<ConfirmOrderCommand>
         private readonly config: ConfigService,
     ) {}
 
-    async execute(command: ConfirmOrderCommand): Promise<OrderResponseDto> {
-        const idempotencyKey = `${command.correlationId}:confirm-order`;
-        const cached = await this.idempotencyStore.get(idempotencyKey);
-        if (cached) return cached as OrderResponseDto;
+    async execute(command: ConfirmOrderCommand): Promise<void> {
+        const corrKey = `${command.correlationId}:confirm-order`;
+        const cached = await this.idempotencyStore.get(corrKey);
+        if (cached) return;
 
         let order: Order | null;
 
@@ -88,15 +87,10 @@ export class ConfirmOrderHandler implements ICommandHandler<ConfirmOrderCommand>
             if (!queryRunner.isReleased) await queryRunner.release();
         }
 
-        // Build response, cache, and return
-        const response = OrderResponseDto.fromDomain(order, command.correlationId);
-
         await this.idempotencyStore.set(
-            idempotencyKey,
-            response,
+            corrKey,
+            { orderId: order.id, success: true },
             this.config.get('TTL_SECONDS', 86400),
         );
-
-        return response;
     }
 }
