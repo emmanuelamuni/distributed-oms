@@ -59,7 +59,7 @@ describe('GetOrderHandler', () => {
     it('should return order response when order is found', async () => {
         mockOrderRepository.findById.mockResolvedValueOnce(mockOrder as unknown as Order);
 
-        const query = new GetOrderQuery(mockOrder.id, '577ef032-2b25-4182-af81-9882955d0c4e');
+        const query = new GetOrderQuery(mockOrder.id);
         const result = await handler.execute(query);
 
         expect(mockOrderRepository.findById).toHaveBeenCalledWith(
@@ -67,15 +67,11 @@ describe('GetOrderHandler', () => {
         );
         expect(result.orderId).toBe('e3a3eb39-1eeb-4f7f-90f2-f4c4bcb61c6e');
         expect(result.status).toBe(OrderStatusEnum.DRAFT);
-        expect(result.correlationId).toBe('577ef032-2b25-4182-af81-9882955d0c4e');
     });
 
     it('should throw OrderNotFoundException when order does not exist', async () => {
         mockOrderRepository.findById.mockResolvedValueOnce(null);
-        const query = new GetOrderQuery(
-            'f434516a-ee5d-41c1-b318-c0a6a6b19e17',
-            '062a6f26-4477-4bd8-b89e-6bf5d2c67944',
-        );
+        const query = new GetOrderQuery('f434516a-ee5d-41c1-b318-c0a6a6b19e17');
 
         await expect(handler.execute(query)).rejects.toThrow(OrderNotFoundException);
     });
