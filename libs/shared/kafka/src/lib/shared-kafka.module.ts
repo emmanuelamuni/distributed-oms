@@ -1,13 +1,21 @@
 import { Module, DynamicModule } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import { ClientsModule, Transport } from '@nestjs/microservices';
-import { Producer, Kafka } from 'kafkajs';
+import { Producer, Kafka, EachMessagePayload, Consumer } from 'kafkajs';
 
 export interface SharedKafkaModuleOptions {
     clientId: string;
 }
 
+export interface KafkaConsumerConfigs {
+    clientId: string;
+    brokers: string[];
+    groupId: string;
+    topics: string[];
+}
+
 export const KAFKA_PRODUCER = Symbol('KAFKA_PRODUCER');
+export const KAFKA_CONSUMER = Symbol('KAFKA_CONSUMER');
 
 /**
  * Decided to go with manual kafka producer
@@ -56,4 +64,23 @@ export class SharedKafkaModule {
             exports: [KAFKA_PRODUCER],
         };
     }
+}
+
+/** Manual consumer definition function */
+export async function createKafkaConsumer(
+    config: KafkaConsumerConfigs,
+    onMessage: (payload: EachMessagePayload) => Promise<void>,
+): Promise<Consumer> {
+    const kafka = new Kafka({ clientId: config.clientId, brokers: config.brokers });
+    const consumer = kafka.consumer({ groupId: config.groupId });
+
+    await consumer.connect();
+    await consumer.subscribe({ topics: config.topics, fromBeginning: false });
+
+    await consumer.run({
+        eachMessage: async (payload) => {
+            await onMessage(payload);
+        },
+    });
+    return consumer;
 }
