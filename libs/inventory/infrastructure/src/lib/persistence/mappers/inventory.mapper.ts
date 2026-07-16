@@ -8,6 +8,7 @@ export class InventoryMapper {
             {
                 sku: raw.sku,
                 nodeId: raw.nodeId,
+                version: raw.version,
                 onHand: Quantity.fromRaw(raw.onHand),
                 reserved: Quantity.fromRaw(raw.reserved),
                 reservations: (raw.reservations || []).map((r) => ({
@@ -27,6 +28,7 @@ export class InventoryMapper {
         entity.id = domain.id;
         entity.sku = domain.sku;
         entity.nodeId = domain.nodeId;
+        entity.version = domain.version;
         entity.onHand = domain.onHand.value;
         entity.reserved = domain.reserved.value;
         entity.reservations = domain.reservations.map((r) => {
