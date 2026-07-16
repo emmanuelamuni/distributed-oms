@@ -15,6 +15,7 @@ export interface ReservationRecord {
 export interface InventoryNodeProps {
     sku: string;
     nodeId: string;
+    version: number;
     onHand: Quantity;
     reserved: Quantity;
     reservations: ReservationRecord[];
@@ -39,6 +40,7 @@ export class InventoryNode extends AggregateRootBase {
             {
                 sku: SKU.create(props.sku).value,
                 nodeId: UniqueId.fromExisting(props.nodeId).value,
+                version: 1,
                 onHand: Quantity.create(props.onHand),
                 reserved: Quantity.zero(),
                 reservations: [],
@@ -104,6 +106,10 @@ export class InventoryNode extends AggregateRootBase {
 
     get nodeId(): string {
         return this.props.nodeId;
+    }
+
+    get version(): number {
+        return this.props.version;
     }
 
     get onHand(): Quantity {
