@@ -29,9 +29,10 @@ import {
     InventoryOutboxTypeOrmEntity,
     InventoryTypeOrmRepository,
     InventoryOutboxTypeOrmRepository,
+    RedisInventoryLockAdapter,
 } from '@doms/inventory/infrastructure';
 
-import { INVENTORY_REPOSITORY } from '@doms/inventory/domain';
+import { INVENTORY_LOCK, INVENTORY_REPOSITORY } from '@doms/inventory/domain';
 
 import { InventoryConsumer } from './inventory.consumer';
 
@@ -74,6 +75,7 @@ import { InventoryConsumer } from './inventory.consumer';
         { provide: OUTBOX_REPOSITORY, useClass: InventoryOutboxTypeOrmRepository },
         { provide: OUTBOX_PUBLISHER, useClass: OutboxPublisherAdapter },
         { provide: IDEMPOTENCY_STORE, useClass: IdempotencyStoreAdapter },
+        { provide: INVENTORY_LOCK, useClass: RedisInventoryLockAdapter },
     ],
 })
 export class AppModule {}
