@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, QueryRunner } from 'typeorm';
+import { Repository, QueryRunner, In } from 'typeorm';
 import { InventoryNode, IInventoryRepositoryPort } from '@doms/inventory/domain';
 import { InventoryNodeTypeOrmEntity } from '../entities/inventory-node.typeorm-entity';
 import { InventoryMapper } from '../mappers/inventory.mapper';
@@ -27,18 +27,34 @@ export class InventoryTypeOrmRepository implements IInventoryRepositoryPort {
         await repo.save(entity);
     }
 
-    async findBySkuAndNode(sku: string, nodeId: string): Promise<InventoryNode | null> {
+    async findBySkusAndNodes(items: { sku: string; nodeId: string }[]): Promise<InventoryNode[]> {
         const repo = this.getRepository();
-        const inventoryNode = await repo.findOne({
-            where: { sku, nodeId },
+
+        const inventoryNodes = await repo.find({
+            where: items,
             relations: { reservations: true },
         });
-        return inventoryNode ? InventoryMapper.toDomain(inventoryNode) : null;
+
+        return inventoryNodes.map(InventoryMapper.toDomain);
     }
 
-    async findBySku(sku: string): Promise<InventoryNode[]> {
+    async findBySkus(skus: string[]): Promise<Map<string, InventoryNode[]>> {
         const repo = this.getRepository();
-        const inventoryNodes = await repo.find({ where: { sku } });
-        return inventoryNodes.map((i) => InventoryMapper.toDomain(i));
+        const dbEntities = await repo.find({ where: { sku: In(skus) } });
+
+        const grouped = new Map<string, InventoryNode[]>();
+
+        for (const entity of dbEntities) {
+            const domainEntity = InventoryMapper.toDomain(entity);
+            const existing = grouped.get(domainEntity.sku);
+
+            if (existing) {
+                existing.push(domainEntity);
+            } else {
+                grouped.set(domainEntity.sku, [domainEntity]);
+            }
+        }
+
+        return grouped;
     }
 }
