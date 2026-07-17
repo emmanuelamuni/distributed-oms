@@ -11,3 +11,6 @@ export * from './lib/queries/get-availability.query';
 // DTOs
 export * from './lib/dtos/availability-response.dto';
 export * from './lib/dtos/reserve-inventory.dto';
+
+// Services
+export * from './lib/services/get-availability.service';
