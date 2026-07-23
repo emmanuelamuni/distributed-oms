@@ -4,11 +4,10 @@ import { ReleaseReservationHandler } from './release-reservation.handler';
 import { ReleaseReservationCommand } from './release-reservation.command';
 import { INVENTORY_REPOSITORY } from '@doms/inventory/domain';
 
-const validCommand = new ReleaseReservationCommand(
-    'WIDGET-1234',
-    'node-001',
-    '62d73b0e-40e0-4dbf-9aa8-0b23f5825c75',
-);
+const validCommand = new ReleaseReservationCommand({
+    correlationId: '62d73b0e-40e0-4dbf-9aa8-0b23f5825c75',
+    lines: [{ sku: 'WIDGET-1234', nodeId: 'node-001' }],
+});
 
 const mockQueryRunner = {
     connect: jest.fn(),
@@ -24,9 +23,13 @@ const mockDataSource = {
     createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
 } as unknown as DataSource;
 
-const mockInventoryRepository = { findBySkuAndNode: jest.fn(), save: jest.fn() };
+const mockInventoryRepository = { findBySkusAndNodes: jest.fn(), save: jest.fn() };
 
-const makeNode = () => ({ releaseReservation: jest.fn() });
+const makeNode = (sku = 'WIDGET-1234', nodeId = 'node-001') => ({
+    sku,
+    nodeId,
+    releaseReservation: jest.fn(),
+});
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 describe('ReleaseReservationHandler', () => {
@@ -50,13 +53,16 @@ describe('ReleaseReservationHandler', () => {
         (mockQueryRunner as any).isReleased = false;
     });
 
-    it('should load node, release reservation, and save in transaction', async () => {
+    it('should load nodes, release reservations, and commit transaction', async () => {
         const node = makeNode();
-        mockInventoryRepository.findBySkuAndNode.mockResolvedValue(node);
+        mockInventoryRepository.findBySkusAndNodes.mockResolvedValue([node]);
         mockInventoryRepository.save.mockResolvedValue(undefined);
 
         await handler.execute(validCommand);
 
+        expect(mockInventoryRepository.findBySkusAndNodes).toHaveBeenCalledWith([
+            { sku: 'WIDGET-1234', nodeId: 'node-001' },
+        ]);
         expect(node.releaseReservation).toHaveBeenCalledWith(
             '62d73b0e-40e0-4dbf-9aa8-0b23f5825c75',
         );
@@ -64,16 +70,17 @@ describe('ReleaseReservationHandler', () => {
         expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
     });
 
-    it('should not throw when inventory node is not found', async () => {
-        mockInventoryRepository.findBySkuAndNode.mockResolvedValue(null);
+    it('should throw and log when nodes length does not match input lines length', async () => {
+        mockInventoryRepository.findBySkusAndNodes.mockResolvedValue([]);
 
-        await expect(handler.execute(validCommand)).resolves.not.toThrow();
+        await handler.execute(validCommand);
+
         expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
     });
 
     it('should rollback when save fails', async () => {
         const node = makeNode();
-        mockInventoryRepository.findBySkuAndNode.mockResolvedValue(node);
+        mockInventoryRepository.findBySkusAndNodes.mockResolvedValue([node]);
         mockInventoryRepository.save.mockRejectedValue(new Error('DB error'));
         (mockQueryRunner as any).isTransactionActive = true;
 
@@ -88,7 +95,7 @@ describe('ReleaseReservationHandler', () => {
         node.releaseReservation.mockImplementation(() => {
             throw new Error('Reservation not found');
         });
-        mockInventoryRepository.findBySkuAndNode.mockResolvedValue(node);
+        mockInventoryRepository.findBySkusAndNodes.mockResolvedValue([node]);
         (mockQueryRunner as any).isTransactionActive = true;
 
         await handler.execute(validCommand);
@@ -98,7 +105,10 @@ describe('ReleaseReservationHandler', () => {
     });
 
     it('should always release queryRunner in finally block', async () => {
-        mockInventoryRepository.findBySkuAndNode.mockResolvedValue(null);
+        const node = makeNode();
+        mockInventoryRepository.findBySkusAndNodes.mockResolvedValue([node]);
+        mockInventoryRepository.save.mockResolvedValue(undefined);
+
         await handler.execute(validCommand);
 
         expect(mockQueryRunner.release).toHaveBeenCalledTimes(1);
