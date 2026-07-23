@@ -5,15 +5,15 @@ import { OutboxRecord, OutboxStatus } from '../entity/outbox.entity';
 import { IOutboxRepositoryPort } from '../ports/outbox.repository.port';
 import { IOutboxPublisherPort } from '../ports/outbox.publisher.port';
 
-const makeRecord = (overrides: Partial<OutboxRecord> = {}): OutboxRecord => ({
+const makeRawRecord = (overrides: Record<string, unknown> = {}) => ({
     id: 'record-001',
-    eventType: 'order.created',
-    eventVersion: 1,
+    event_type: 'order.created',
+    event_version: 1,
     payload: { orderId: 'order-001' },
     status: OutboxStatus.PENDING,
-    createdAt: new Date(),
-    publishedAt: null,
-    retryCount: 0,
+    created_at: new Date(),
+    published_at: null,
+    retry_count: 0,
     ...overrides,
 });
 
@@ -97,12 +97,12 @@ describe('OutboxProcessor', () => {
 
     describe('when pending records exist', () => {
         it('should publish each record to the correct topic', async () => {
-            const records = [
-                makeRecord({ id: '1', eventType: 'order.created' }),
-                makeRecord({ id: '2', eventType: 'order.confirmed' }),
+            const rawRecords = [
+                makeRawRecord({ id: '1', event_type: 'order.created' }),
+                makeRawRecord({ id: '2', event_type: 'order.confirmed' }),
             ];
 
-            repository.findPending.mockResolvedValue(records);
+            repository.findPending.mockResolvedValue(rawRecords as unknown as OutboxRecord[]);
             publisher.publish.mockResolvedValue(undefined);
             repository.markPublished.mockResolvedValue(undefined);
 
@@ -112,19 +112,19 @@ describe('OutboxProcessor', () => {
             expect(publisher.publish).toHaveBeenNthCalledWith(
                 1,
                 'order.created',
-                records[0].payload,
+                rawRecords[0].payload,
             );
             expect(publisher.publish).toHaveBeenNthCalledWith(
                 2,
                 'order.confirmed',
-                records[1].payload,
+                rawRecords[1].payload,
             );
         });
 
         it('should mark each record as published after a successful publish', async () => {
-            const records = [makeRecord({ id: 'rec-1' }), makeRecord({ id: 'rec-2' })];
+            const rawRecords = [makeRawRecord({ id: 'rec-1' }), makeRawRecord({ id: 'rec-2' })];
 
-            repository.findPending.mockResolvedValue(records);
+            repository.findPending.mockResolvedValue(rawRecords as unknown as OutboxRecord[]);
             publisher.publish.mockResolvedValue(undefined);
             repository.markPublished.mockResolvedValue(undefined);
 
@@ -136,7 +136,7 @@ describe('OutboxProcessor', () => {
         });
 
         it('should commit and release the transaction after successful processing', async () => {
-            repository.findPending.mockResolvedValue([makeRecord()]);
+            repository.findPending.mockResolvedValue([makeRawRecord() as unknown as OutboxRecord]);
             publisher.publish.mockResolvedValue(undefined);
             repository.markPublished.mockResolvedValue(undefined);
 
@@ -150,9 +150,9 @@ describe('OutboxProcessor', () => {
 
     describe('when a publish fails', () => {
         it('should mark the record as failed', async () => {
-            const record = makeRecord({ id: 'failing-record' });
+            const rawRecord = makeRawRecord({ id: 'failing-record' });
 
-            repository.findPending.mockResolvedValue([record]);
+            repository.findPending.mockResolvedValue([rawRecord as unknown as OutboxRecord]);
             publisher.publish.mockRejectedValue(new Error('Kafka unavailable'));
             repository.markFailed.mockResolvedValue(undefined);
 
@@ -164,12 +164,12 @@ describe('OutboxProcessor', () => {
         });
 
         it('should continue processing remaining records after a failure', async () => {
-            const records = [
-                makeRecord({ id: 'failing-record' }),
-                makeRecord({ id: 'succeeding-record' }),
+            const rawRecords = [
+                makeRawRecord({ id: 'failing-record' }),
+                makeRawRecord({ id: 'succeeding-record' }),
             ];
 
-            repository.findPending.mockResolvedValue(records);
+            repository.findPending.mockResolvedValue(rawRecords as unknown as OutboxRecord[]);
 
             publisher.publish
                 .mockRejectedValueOnce(new Error('Kafka unavailable'))
@@ -191,9 +191,9 @@ describe('OutboxProcessor', () => {
 
     describe('when an unexpected error occurs', () => {
         it('should rollback the transaction and rethrow', async () => {
-            const record = makeRecord();
+            const rawRecord = makeRawRecord();
 
-            repository.findPending.mockResolvedValue([record]);
+            repository.findPending.mockResolvedValue([rawRecord as unknown as OutboxRecord]);
             publisher.publish.mockResolvedValue(undefined);
             repository.markPublished.mockRejectedValue(new Error('Database failure'));
             repository.markFailed.mockRejectedValue(new Error('Cannot mark failed'));
