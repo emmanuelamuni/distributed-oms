@@ -4,6 +4,8 @@ import { of } from 'rxjs';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
 import { IIdempotencyStorePort } from '../port/idempotency.store.port';
 
+const VALID_UUID = '350c6527-4a97-4c2c-80f8-597138d5af9e';
+
 const mockStore = (): jest.Mocked<IIdempotencyStorePort> => ({
     get: jest.fn(),
     set: jest.fn(),
@@ -15,12 +17,23 @@ const mockConfig = (values: Record<string, unknown>): jest.Mocked<ConfigService>
         get: jest.fn((key: string) => values[key]),
     }) as unknown as jest.Mocked<ConfigService>;
 
-const mockExecutionContext = (headers: Record<string, string>): ExecutionContext =>
-    ({
+const mockExecutionContext = (
+    headers: Record<string, string>,
+    body: Record<string, unknown> = { customerId: 'cust-123' },
+): ExecutionContext => {
+    const lowerCaseHeaders = Object.fromEntries(
+        Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]),
+    );
+    return {
         switchToHttp: () => ({
-            getRequest: () => ({ headers }),
+            getRequest: () => ({
+                get: (headerName: string) => lowerCaseHeaders[headerName.toLowerCase()],
+                headers: lowerCaseHeaders,
+                body,
+            }),
         }),
-    }) as unknown as ExecutionContext;
+    } as unknown as ExecutionContext;
+};
 
 const mockCallHandler = (response: unknown) => ({
     handle: () => of(response),
@@ -63,7 +76,7 @@ describe('IdempotencyInterceptor', () => {
             const cachedResponse = { orderId: 'cached-order-123', status: 'DRAFT' };
             store.get.mockResolvedValue(cachedResponse);
 
-            const context = mockExecutionContext({ 'idempotency-key': 'key-abc' });
+            const context = mockExecutionContext({ 'idempotency-key': VALID_UUID });
             const handler = mockCallHandler({ orderId: 'new-order' });
 
             const result$ = await interceptor.intercept(context, handler);
@@ -79,7 +92,7 @@ describe('IdempotencyInterceptor', () => {
         it('should not write to the store again on a cache hit', async () => {
             store.get.mockResolvedValue({ orderId: 'existing' });
 
-            const context = mockExecutionContext({ 'idempotency-key': 'key-abc' });
+            const context = mockExecutionContext({ 'idempotency-key': VALID_UUID });
             const handler = mockCallHandler({});
 
             await interceptor.intercept(context, handler);
@@ -94,7 +107,7 @@ describe('IdempotencyInterceptor', () => {
             store.set.mockResolvedValue(undefined);
 
             const freshResponse = { orderId: 'new-order-456', status: 'DRAFT' };
-            const context = mockExecutionContext({ 'idempotency-key': 'key-xyz' });
+            const context = mockExecutionContext({ 'idempotency-key': VALID_UUID });
             const handler = mockCallHandler(freshResponse);
 
             const result$ = await interceptor.intercept(context, handler);
@@ -112,7 +125,10 @@ describe('IdempotencyInterceptor', () => {
             store.set.mockResolvedValue(undefined);
 
             const freshResponse = { orderId: 'new-order-456', status: 'DRAFT' };
-            const context = mockExecutionContext({ 'idempotency-key': 'key-xyz' });
+            const context = mockExecutionContext(
+                { 'idempotency-key': VALID_UUID },
+                { customerId: 'cust-123' },
+            );
             const handler = mockCallHandler(freshResponse);
 
             const result$ = await interceptor.intercept(context, handler);
@@ -120,23 +136,30 @@ describe('IdempotencyInterceptor', () => {
             await new Promise<void>((resolve) => {
                 result$.subscribe({
                     complete: () => {
-                        expect(store.set).toHaveBeenCalledWith('key-xyz', freshResponse, 86_400);
+                        expect(store.set).toHaveBeenCalledWith(
+                            `${VALID_UUID}:cust-123`,
+                            freshResponse,
+                            86_400,
+                        );
                         resolve();
                     },
                 });
             });
         });
 
-        it('should call store.get with the exact key from the header', async () => {
+        it('should call store.get with the exact scoped key', async () => {
             store.get.mockResolvedValue(null);
             store.set.mockResolvedValue(undefined);
 
-            const context = mockExecutionContext({ 'idempotency-key': 'my-exact-key' });
+            const context = mockExecutionContext(
+                { 'idempotency-key': VALID_UUID },
+                { customerId: 'cust-999' },
+            );
             const handler = mockCallHandler({});
 
             await interceptor.intercept(context, handler);
 
-            expect(store.get).toHaveBeenCalledWith('my-exact-key');
+            expect(store.get).toHaveBeenCalledWith(`${VALID_UUID}:cust-999`);
         });
     });
 });
