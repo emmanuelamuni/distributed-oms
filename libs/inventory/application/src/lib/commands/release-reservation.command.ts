@@ -1,11 +1,13 @@
 import { CommandBase } from '@doms/shared/kernel';
 
+// Create a temporary payload shape
+export interface TemporaryPayload {
+    correlationId: string;
+    lines: { sku: string; nodeId: string }[];
+}
+
 export class ReleaseReservationCommand extends CommandBase {
-    constructor(
-        readonly sku: string,
-        readonly nodeId: string,
-        correlationId: string,
-    ) {
-        super(correlationId);
+    constructor(readonly payload: TemporaryPayload) {
+        super(payload.correlationId);
     }
 }

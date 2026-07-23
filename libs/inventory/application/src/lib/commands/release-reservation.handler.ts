@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import {
     INVENTORY_REPOSITORY,
     IInventoryRepositoryPort,
@@ -20,32 +20,55 @@ export class ReleaseReservationHandler implements ICommandHandler<ReleaseReserva
     ) {}
 
     async execute(command: ReleaseReservationCommand): Promise<void> {
-        let inventoryNode: InventoryNode | null = null;
-        const { sku, nodeId, correlationId } = command;
+        const { payload } = command;
+        if (!payload.lines) return;
 
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
+        let inventoryNodes: InventoryNode[] | null = null;
+        let queryRunner: QueryRunner | null = null;
 
         try {
-            // Load up InventoryNode
-            inventoryNode = await this.inventoryRepository.findBySkuAndNode(sku, nodeId);
+            const items = payload.lines.sort((a, b) => {
+                if (a.nodeId > b.nodeId) return -1;
+                if (a.nodeId < b.nodeId) return 1;
+                return 0;
+            });
 
-            if (!inventoryNode) {
-                throw new Error(`No InventoryNode found for SKU: ${sku}`);
+            // Load up InventoryNode
+            inventoryNodes = await this.inventoryRepository.findBySkusAndNodes(items);
+
+            if (inventoryNodes.length !== items.length) {
+                throw new Error(`No InventoryNodes found for the provided SKUs and Node IDs`);
             }
 
-            inventoryNode.releaseReservation(correlationId);
-
+            queryRunner = this.dataSource.createQueryRunner();
+            await queryRunner.connect();
             await queryRunner.startTransaction();
-            await this.inventoryRepository.save(inventoryNode, queryRunner);
+
+            for (const item of items) {
+                const node = inventoryNodes.find(
+                    (n) => n.sku === item.sku && n.nodeId === item.nodeId,
+                );
+
+                if (!node)
+                    throw new Error(
+                        `InventoryNode not found for SKU: ${item.sku}, Node ID: ${item.nodeId}`,
+                    );
+
+                node.releaseReservation(payload.correlationId);
+
+                await this.inventoryRepository.save(node, queryRunner);
+            }
+
             await queryRunner.commitTransaction();
         } catch (error) {
-            if (queryRunner.isTransactionActive) await queryRunner.rollbackTransaction();
+            if (queryRunner && queryRunner.isTransactionActive)
+                await queryRunner.rollbackTransaction();
+
             this.logger.error(
-                `Unable to release reservation. CorrelationId: ${correlationId}. Error: ${error}`,
+                `Error releasing reservations with correlationId: ${payload.correlationId}. ${error}`,
             );
         } finally {
-            if (!queryRunner.isReleased) await queryRunner.release();
+            if (queryRunner && !queryRunner.isReleased) await queryRunner.release();
         }
     }
 }
